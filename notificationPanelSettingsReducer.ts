@@ -15,7 +15,6 @@ export interface INotificationPanelSettingsAdminState {
     groups: UserGroupDefinition.V2_0_0.UserGroupDefinition[];
     selectedGroupId: number;
     hasChanges: boolean;
-    canGrpSelected: boolean;
     groupSettings: NotificationPanelSettings;
     siteSettings: NotificationPanelSettings;
     editedSettings: NotificationPanelSettings;
@@ -69,7 +68,7 @@ export const notificationPanelSettingsReducer = (
     }
 ): INotificationPanelSettingsAdminState => {
     const { type, payload } = action;
-    const { selectedGroupId, groupSettings, siteSettings, editedSettings, hasChanges } = currentState;
+    const { selectedGroupId, groupSettings, siteSettings, editedSettings } = currentState;
 
     switch (type) {
         case NotificationPanelSettingsAction.SetGroups:
@@ -82,42 +81,7 @@ export const notificationPanelSettingsReducer = (
                 ...currentState,
                 siteSettings: _.assign(_.clone(siteSettings), payload.siteSettings)
             };
-        /*case NotificationPanelSettingsAction.SetGroupSettings:
-            if (selectedGroupId === -1) {
-                payload.groupSettings = _.cloneDeep(siteSettings);
-            } else if (!payload.groupSettings || payload.groupSettings.useDefault) {
-                payload.groupSettings = _.cloneDeep(siteSettings);
-                payload.groupSettings.useDefault = true;
-            } else {
-                payload.groupSettings.useDefault = false;
-            }
-            //if (hasChanges) {
-            if (!_.isEqual(groupSettings, editedSettings)) {
-                const newGroupSettings = _.assign(_.clone(groupSettings), payload.groupSettings);
-                const newSettings = _.clone(editedSettings);
-                return {
-                    ...currentState,
-                    groupSettings: newGroupSettings,
-                    editedSettings: newSettings,
-                    //hasChanges: false
-                }
-            } else {
-                const newGroupSettings = _.assign(_.clone(groupSettings), payload.groupSettings);
-                return {
-                    ...currentState,
-                    groupSettings: newGroupSettings,
-                    editedSettings: _.assign(_.clone(editedSettings), newGroupSettings),
-                    hasChanges: false
-                };
-            }*/
-
         case NotificationPanelSettingsAction.SetGroupSettings:
-            console.log(groupSettings);
-            console.log(payload.groupSettings);
-            console.log(siteSettings);
-            console.log(editedSettings);
-            console.log(currentState);
-            console.log(payload.editedSettings);
             if (selectedGroupId === -1) {
                 payload.groupSettings = _.cloneDeep(siteSettings);
             } else if (!payload.groupSettings || payload.groupSettings.useDefault) {
@@ -134,121 +98,82 @@ export const notificationPanelSettingsReducer = (
                 hasChanges: false
             };
         case NotificationPanelSettingsAction.SetEditedSettings: {
-            if ((currentState?.groups.length > 0) &&
-                currentState.groups.filter(group => group.id === selectedGroupId)[0].name?.startsWith('Default')) {
-                const originalSettings = _.assign(_.clone(editedSettings), _.clone(groupSettings));
-                return {
-                    ...currentState,
-                    hasChanges: false,
-                    editedSettings: originalSettings,
-                    showSaveNotification: true,
-                    errorMsg: 'Cant Modify in Default Group'
-                }
-            } else {
-                const newSettings = {
-                    ..._.assign(_.cloneDeep(editedSettings), _.cloneDeep(payload.editedSettings)),
-                    useDefault: false
-                };
-                return {
-                    ...currentState,
-                    editedSettings: newSettings,
-                    hasChanges: !_.isEqual(JSON.stringify(newSettings), JSON.stringify(groupSettings))
-                };
-            }
+            const newSettings = {
+                ..._.assign(_.cloneDeep(editedSettings), _.cloneDeep(payload.editedSettings)),
+                useDefault: false
+            };
+            return {
+                ...currentState,
+                editedSettings: newSettings,
+                hasChanges: !_.isEqual(JSON.stringify(newSettings), JSON.stringify(groupSettings))
+            };
         }
         case NotificationPanelSettingsAction.SetSelectedGroup:
             return {
                 ...currentState,
-                canGrpSelected:false,
                 selectedGroupId: payload.selectedGroupId
             };
         case NotificationPanelSettingsAction.ToggleUseDefault: {
-            if ((currentState?.groups.length > 0) &&
-                currentState.groups.filter(group => group.id === selectedGroupId)[0].name?.startsWith('Default')) {
-                const originalSettings = _.assign(_.clone(editedSettings), _.clone(groupSettings));
-                return {
-                    ...currentState,
-                    hasChanges: false,
-                    editedSettings: originalSettings,
-                    showSaveNotification: true,
-                    errorMsg: 'Cant Modify in Default Group'
-                }
-            }
-            else {
-                if (selectedGroupId === -1 && !editedSettings.useDefault) {
-                    const defaultSettings = {
-                        ..._.assign(_.cloneDeep(editedSettings), new NotificationPanelSettings()),
-                        useDefault: true
-                    };
-                    return {
-                        ...currentState,
-                        editedSettings: defaultSettings,
-                        hasChanges: !_.isEqual(
-                            JSON.stringify(groupSettings),
-                            JSON.stringify(defaultSettings)
-                        )
-                    };
-                }
-                if (!editedSettings.useDefault) {
-                    const defaultSettings = {
-                        ..._.assign(_.cloneDeep(editedSettings), _.cloneDeep(siteSettings)),
-                        useDefault: true
-                    };
-                    return {
-                        ...currentState,
-                        editedSettings: defaultSettings,
-                        hasChanges: !_.isEqual(
-                            JSON.stringify(groupSettings),
-                            JSON.stringify(defaultSettings)
-                        )
-                    };
-                }
-                const newSettings = {
-                    ...editedSettings,
-                    useDefault: false
+            if (selectedGroupId === -1 && !editedSettings.useDefault) {
+                const defaultSettings = {
+                    ..._.assign(_.cloneDeep(editedSettings), new NotificationPanelSettings()),
+                    useDefault: true
                 };
                 return {
                     ...currentState,
-                    editedSettings: newSettings,
-                    hasChanges: !_.isEqual(JSON.stringify(groupSettings), JSON.stringify(newSettings))
+                    editedSettings: defaultSettings,
+                    hasChanges: !_.isEqual(
+                        JSON.stringify(groupSettings),
+                        JSON.stringify(defaultSettings)
+                    )
                 };
             }
+            if (!editedSettings.useDefault) {
+                const defaultSettings = {
+                    ..._.assign(_.cloneDeep(editedSettings), _.cloneDeep(siteSettings)),
+                    useDefault: true
+                };
+                return {
+                    ...currentState,
+                    editedSettings: defaultSettings,
+                    hasChanges: !_.isEqual(
+                        JSON.stringify(groupSettings),
+                        JSON.stringify(defaultSettings)
+                    )
+                };
+            }
+            const newSettings = {
+                ...editedSettings,
+                useDefault: false
+            };
+            return {
+                ...currentState,
+                editedSettings: newSettings,
+                hasChanges: !_.isEqual(JSON.stringify(groupSettings), JSON.stringify(newSettings))
+            };
         }
         case NotificationPanelSettingsAction.ToggleShowCategories: {
-            if ((currentState?.groups.length > 0) &&
-                currentState.groups.filter(group => group.id === selectedGroupId)[0].name?.startsWith('Default')) {
-                const originalSettings = _.assign(_.clone(editedSettings), _.clone(groupSettings));
-                return {
-                    ...currentState,
-                    hasChanges: false,
-                    editedSettings: originalSettings,
-                    showSaveNotification: true,
-                    errorMsg: 'Cant Modify in Default Group'
-                }
+            const updatedShowCategories: boolean = !editedSettings.showCategories;
+            let updatedSortSelection: NotificationPanelSort = editedSettings.sortOrder;
+
+            if (!updatedShowCategories) {
+                updatedSortSelection = NotificationPanelSort.PriorityAscending;
+            } else {
+                updatedSortSelection = NotificationPanelSort.Categories;
             }
-            else {
-                const updatedShowCategories: boolean = !editedSettings.showCategories;
-                let updatedSortSelection: NotificationPanelSort = editedSettings.sortOrder;
 
-                if (!updatedShowCategories) {
-                    updatedSortSelection = NotificationPanelSort.PriorityAscending;
-                } else {
-                    updatedSortSelection = NotificationPanelSort.Categories;
-                }
+            const newSettings = {
+                ...editedSettings,
+                showCategories: updatedShowCategories,
+                sortOrder: updatedSortSelection,
+                useDefault: false
+            };
 
-                const newSettings = {
-                    ...editedSettings,
-                    showCategories: updatedShowCategories,
-                    sortOrder: updatedSortSelection,
-                    useDefault: false
-                };
-
-                return {
-                    ...currentState,
-                    editedSettings: newSettings,
-                    hasChanges: !_.isEqual(JSON.stringify(groupSettings), JSON.stringify(newSettings))
-                };
-            }
+            return {
+                ...currentState,
+                editedSettings: newSettings,
+                hasChanges: !_.isEqual(JSON.stringify(groupSettings), JSON.stringify(newSettings))
+            };
         }
         case NotificationPanelSettingsAction.Clear: {
             const originalSettings = _.assign(_.clone(editedSettings), _.clone(groupSettings));
@@ -256,7 +181,6 @@ export const notificationPanelSettingsReducer = (
             return {
                 ...currentState,
                 hasChanges: false,
-                canGrpSelected: true,
                 editedSettings: originalSettings
             };
         }
@@ -264,7 +188,6 @@ export const notificationPanelSettingsReducer = (
             return {
                 ...currentState,
                 hasChanges: false,
-                canGrpSelected: true,
                 groupSettings: _.assign(_.clone(groupSettings), editedSettings),
                 siteSettings:
                     selectedGroupId === -1
@@ -408,7 +331,6 @@ export const useNotificationPanelSettingsReducer =
             groups: [],
             selectedGroupId: -1,
             hasChanges: false,
-            canGrpSelected: true,
             groupSettings: new NotificationPanelSettings(),
             siteSettings: new NotificationPanelSettings(),
             editedSettings: new NotificationPanelSettings(),

@@ -8,7 +8,7 @@ export const NotificationPanelSettingsGroupSelector: FC = () => {
         NotificationPanelSettingsAdminContext
     );
 
-    const { groups, selectedGroupId, hasChanges } = state;
+    const { groups, selectedGroupId } = state;
 
     return (
         <div className="group-select-area">
@@ -17,9 +17,9 @@ export const NotificationPanelSettingsGroupSelector: FC = () => {
                 <div className="group-selector">
                     <HxgnSelect
                         loading={!groups.length}
-                        options={groups?.sort((a, b) => a.name.localeCompare(b.name))}
+                        options={groups}
                         value={selectedGroupId}
-                        onChange={hasChanges ? createNewGroup : setSelectedGroup}
+                        onChange={setSelectedGroup}
                         valueKey="id"
                         labelKey="name"
                         clearable={false}

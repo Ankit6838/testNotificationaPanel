@@ -23,27 +23,16 @@ export const NotificationPanelSettingsAdmin: FC<INotificationPanelSettingsAdminP
     const { $state } = props;
     const { state, strings, getSettings, dismissNotification, clearChanges, saveSettings } =
         reducer;
-    const { selectedGroupId, showSaveNotification, errorMsg, hasChanges, canGrpSelected } = state;
+    const { selectedGroupId, showSaveNotification, errorMsg, hasChanges } = state;
     const [onlyGroupSettings, setOnlyGroupSettings] = useState(false);
-
-    const [showDialog, canShowDialog] = useState(false);
-    const [restrictCreateNewGroup, setRestrictCreateNewGroup] = useState(false);
 
     useEffect(() => {
         getSettings(onlyGroupSettings);
         setOnlyGroupSettings(true);
-        if (hasChanges) {
-            (restrictCreateNewGroup || !canGrpSelected) ? canShowDialog(true) : canShowDialog(false);
-        }
-        else canShowDialog(false);
-    }, [selectedGroupId, canGrpSelected, restrictCreateNewGroup]);
+    }, [selectedGroupId]);
 
     /** Handler for Create New Group button. Navigates to Group management view and opens new group area */
     const createNewGroup = () => {
-        if (hasChanges) {
-            setRestrictCreateNewGroup(true);
-            return;
-        }
         const createGroupURL = 'userGroupManagementView?select=group&id=CreateNew';
         let url: string = createGroupURL;
         let params: any;
@@ -79,48 +68,14 @@ export const NotificationPanelSettingsAdmin: FC<INotificationPanelSettingsAdminP
                     }
                     title={
                         !_.isEmpty(errorMsg)
-                            ? (((reducer?.state?.groups).length > 0) &&
-                                (reducer.state.groups).filter(group => group.id === selectedGroupId)[0]?.name?.startsWith('Default'))
-                                ? "Cannot Modify Default Groups"
-                                : strings.NOTIFICATION_CONFIG_SAVE_FAILED
+                            ? strings.NOTIFICATION_CONFIG_SAVE_FAILED
                             : strings.NOTIFICATION_CONFIG_SAVE_SUCCESS
                     }
                     dismiss={() => dismissNotification()}
                 />
                 <div>
-                    {showDialog && (
-                        <div className="modal-confirm-backdrop backdrop" style={{ opacity: 1 }}>
-                            <div className="modal-confirm dispatch-confirm flex-row flex-justify-center flex-align-start">
-                                <div className="modal-confirm-pose-group" style={{ opacity: 1 }}>
-                                    <div className="modal-confirm-dialog dispatch-confirm-dialog flex-col flex-justify-center flex-align-center">
-                                        <div className="prompt-wrapper flex-grow flex-row flex-align-center flex-justify-center">
-                                            {"You have unsaved changes. Do you want to save the changes?"}
-                                        </div>
-                                        <div className="btn-container flex-row flex-align-center flex-justify-end">
-                                            <HxgnButton
-                                                display={strings['CANCEL']}
-                                                onClick={() => {
-                                                    clearChanges();
-                                                    setRestrictCreateNewGroup(false);
-                                                }}
-                                            />
-                                            <HxgnButton
-                                                primary
-                                                className="save-btn"
-                                                display={strings['SAVE']}
-                                                onClick={() => {
-                                                    saveSettings();
-                                                    setRestrictCreateNewGroup(false);
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    <NotificationPanelSettingsGroupSelector></NotificationPanelSettingsGroupSelector>
-                    <NotificationPanelSettingsCategoryOrder></NotificationPanelSettingsCategoryOrder>
+                    <NotificationPanelSettingsGroupSelector />
+                    <NotificationPanelSettingsCategoryOrder />
                 </div>
                 <div className="admin-notification-settings-right">
                     <div className="notification-menu-header">
@@ -139,8 +94,7 @@ export const NotificationPanelSettingsAdmin: FC<INotificationPanelSettingsAdminP
                             className="save-btn"
                             display={strings['SAVE']}
                             onClick={saveSettings}
-                            disabled={!hasChanges || (reducer?.state?.groups).filter(
-                                group => group.id === selectedGroupId)[0]?.name?.startsWith('Default ')}
+                            disabled={!hasChanges}
                         />
                     </div>
                 </div>
